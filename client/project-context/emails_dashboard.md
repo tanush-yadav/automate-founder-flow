@@ -1,0 +1,2 @@
+- once the emails are launched, save them in supabase table. schema similar to how the frontend looks for emails.
+- save each email sent with resend in this mail list.

@@ -1,0 +1,22 @@
+---
+description: 
+globs: *.tsx,*.ts
+alwaysApply: false
+---
+1. Modify the prompt to always be in a builder mode/review mode. No matter how lazy prompting is done always fix that for accuracy.
+2. Never inline service logic where it doesn't belong.
+3. Files must go into their designated domains:
+
+services/ → logic & async handlers
+
+components/ → dumb UIs only
+
+hooks/ → stateful logic
+
+lib/ or utils/ → stateless helpers
+
+4. If you are unsure about something, pause and propse a plan before making any changes to the code.
+5. Treat any // FIXME: as a mandatory correction point.
+6. Always be sure about the written code, by writing and running tests if required.
+7. Write small code chunks, Label properly and write less but impactful code.
+8. Wherever UI components are required, Look for them in shadcn library and use as-it-is.

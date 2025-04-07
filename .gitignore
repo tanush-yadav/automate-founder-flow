@@ -71,4 +71,4 @@ logs/
 
 # Database
 *.db
-*.sqlite3
+*.sqlite3node_modules/

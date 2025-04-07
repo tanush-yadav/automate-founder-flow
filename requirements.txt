@@ -1,0 +1,21 @@
+# Core backend requirements
+controlflow>=0.11.1  # AI agent orchestration library
+pydantic>=2.5.0      # Data validation
+python-dotenv>=1.0.0 # Environment variable management
+supabase>=2.2.0      # Supabase client
+requests>=2.31.0     # HTTP client for APIs
+beautifulsoup4>=4.12.0 # HTML parsing
+fastapi>=0.104.0     # FastAPI framework
+uvicorn>=0.23.0      # ASGI server for FastAPI
+playwright>=1.50.0   # Browser automation for scraping
+
+# Frontend
+streamlit>=1.30.0    # UI framework
+pandas>=2.1.0        # Data manipulation
+
+# Visualization and UI enhancements (optional)
+plotly>=5.18.0       # Interactive charts
+streamlit-extras     # Additional Streamlit components
+
+# Testing and development (optional)
+pytest>=7.4.0        # Testing framework
