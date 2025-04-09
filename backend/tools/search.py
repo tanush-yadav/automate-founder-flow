@@ -2,9 +2,10 @@
 Search tools for generating and executing Google search queries
 """
 import requests
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import logging
 from ..models import JobQuery
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -53,19 +54,18 @@ def generate_google_dorks(query: JobQuery) -> List[str]:
     return dorks
 
 
-def execute_google_search(dorks: List[str], limit: int = 10) -> List[str]:
+def execute_google_search(dorks: List[str], limit: int = 10, start_index: int = 0) -> Tuple[List[str], int]:
     """
     Execute Google search using SERP API and extract job URLs
 
     Args:
         dorks: List of Google search query strings
         limit: Maximum number of results to return
+        start_index: Index to start from (for pagination/continuation)
 
     Returns:
-        A list of job URLs from workatastartup.com
+        A tuple containing (list of job URLs from workatastartup.com, next start index)
     """
-
-
     job_urls = []
     results_per_dork = max(1, limit // len(dorks))
 
@@ -78,8 +78,8 @@ def execute_google_search(dorks: List[str], limit: int = 10) -> List[str]:
             params = {
                 "engine": "google",
                 "q": dork,
-                "api_key": "fee38617c45b6681f06a5c9fbd18d068f3461d3b5767c22ec3959a7c61e9ffce",
-                "num": results_per_dork * 2  # Request more results as some may not be relevant
+                "api_key": os.environ.get("SERP_API_KEY"),
+                "num": results_per_dork * 2,  # Request more results as some may not be relevant
             }
 
             logger.info(f"Calling SERP API with query: {dork}")
@@ -116,56 +116,3 @@ def execute_google_search(dorks: List[str], limit: int = 10) -> List[str]:
     return job_urls[:limit]
 
 
-def mock_execute_google_search(dorks: List[str], limit: int = 10) -> List[str]:
-    """
-    Mock implementation of Google search for testing purposes
-
-    Args:
-        dorks: List of Google search query strings
-        limit: Maximum number of results to return
-
-    Returns:
-        A list of mock job URLs from workatastartup.com
-    """
-    logger.info(f"Mock executing Google search with {len(dorks)} dorks")
-
-    # Sample job URLs to return
-    mock_urls = [
-        "https://www.workatastartup.com/jobs/12345",
-        "https://www.workatastartup.com/jobs/23456",
-        "https://www.workatastartup.com/jobs/34567",
-        "https://www.workatastartup.com/jobs/45678",
-        "https://www.workatastartup.com/jobs/56789",
-        "https://www.workatastartup.com/jobs/67890",
-        "https://www.workatastartup.com/jobs/78901",
-        "https://www.workatastartup.com/jobs/89012",
-        "https://www.workatastartup.com/jobs/90123",
-        "https://www.workatastartup.com/jobs/01234",
-    ]
-
-    # Add role and location info to the URLs to make them more realistic
-    role_keywords = []
-    location_keywords = []
-
-    for dork in dorks:
-        dork_parts = dork.lower().replace("site:workatastartup.com", "").strip()
-        for part in dork_parts.split():
-            if part.startswith('"') and part.endswith('"'):
-                if "francisco" in part.lower() or "york" in part.lower() or "angeles" in part.lower():
-                    location_keywords.append(part.strip('"'))
-                else:
-                    role_keywords.append(part.strip('"'))
-            elif "engineer" in part.lower() or "developer" in part.lower() or "manager" in part.lower():
-                role_keywords.append(part)
-
-    role_keyword = role_keywords[0] if role_keywords else "software-engineer"
-    location_keyword = location_keywords[0] if location_keywords else "san-francisco"
-
-    result_urls = []
-    for i, url in enumerate(mock_urls[:limit]):
-        # Add role and location to make URLs more realistic
-        enhanced_url = f"{url}-{role_keyword.lower().replace(' ', '-')}-{location_keyword.lower().replace(' ', '-')}"
-        result_urls.append(enhanced_url)
-
-    logger.info(f"Found {len(result_urls)} mock job URLs")
-    return result_urls

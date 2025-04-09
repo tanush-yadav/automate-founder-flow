@@ -18,6 +18,7 @@ Follow these rules:
 3. Extract any other relevant filters (company stage, industry, technology, etc.)
 4. Be concise and precise in your extraction
 5. If the query is ambiguous, make reasonable assumptions based on context
+6. If this query is similar to a previous one, we'll reuse the progress from the previous search
 """
 
 # Instructions for agents to follow when collecting lead information
@@ -32,6 +33,8 @@ Follow these steps:
 5. Organize the collected information into a structured lead
 
 Be thorough and accurate in your data extraction. If certain information can't be found, note that clearly.
+
+Important: The system automatically checks for duplicate companies before processing, so you'll only receive new companies to process.
 """
 
 # Instructions for agents to follow when sending personalized emails
@@ -104,18 +107,28 @@ def create_email_agent(use_mocks: bool = False) -> cf.Agent:
     Returns:
         ControlFlow Agent configured for email sending
     """
-    # Define the tools the agent will have access to
-    agent_tools = get_tools(use_mocks=use_mocks)
+    try:
+        # Define the tools the agent will have access to
+        agent_tools = get_tools(use_mocks=use_mocks)
 
-    # Create and return the agent
-    agent = cf.Agent(
-        name="Email Agent",
-        instructions=EMAIL_AGENT_INSTRUCTIONS,
-        tools=agent_tools
-    )
+        # Log available tools for debugging
+        tool_names = [tool.__name__ if hasattr(tool, "__name__") else str(tool) for tool in agent_tools]
+        logger.info(f"Email agent created with tools: {tool_names}")
 
-    logger.info("Created Email Agent")
-    return agent
+        # Create and return the agent
+        agent = cf.Agent(
+            name="Email Agent",
+            instructions=EMAIL_AGENT_INSTRUCTIONS,
+            tools=agent_tools
+        )
+
+        logger.info("Created Email Agent")
+        return agent
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error(f"Error creating email agent: {str(e)}\nTraceback:\n{error_trace}")
+        raise
 
 def get_default_agent(use_mocks: bool = False) -> cf.Agent:
     """

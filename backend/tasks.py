@@ -106,6 +106,7 @@ def execute_search_task(job_query: JobQuery, use_mocks: bool = False) -> List[st
     # Run the task
     result = task.run()
     logger.info(f"Found {len(result)} job URLs")
+    logger.info(f"Job URLs: {result}")
     return result
 
 def collect_lead_task(job_url: str, use_mocks: bool = False) -> Lead:
@@ -161,29 +162,39 @@ def send_email_task(lead: Lead, template_name: str = "Default Template", use_moc
         logger.warning(f"Cannot send email to lead without email address: {lead.company_name}")
         return {"status": "Failed", "error": "No contact email available"}
 
+    try:
+        # Create a task to send the email
+        task = cf.Task(
+            objective=f"Send personalized email to lead",
+            agents=[create_email_agent(use_mocks=use_mocks)],
+            context={"lead": lead, "template_name": template_name},
+            instructions="""
+            Follow these steps to send an email to the lead:
+            1. Get the email template using get_template_by_name
+            2. Prepare a personalized email using prepare_email_for_lead
+            3. Send the email using send_email_yagmail
+            4. Log the email using log_email_sent
+            5. Return a dictionary with the sending result which includes the following fields:
+                - status: "Failed" if the email sending failed, "ReadyToSend" if it succeeded
+                - error: error message if the email sending failed, None otherwise
+                - subject: filled subject of the email
+                - body: filled body of the email
+                - scheduled_at: time the email was scheduled to be sent
 
-    # Create a task to send the email
-    task = cf.Task(
-        objective=f"Send personalized email to lead",
-        agents=[create_email_agent(use_mocks=use_mocks)],
-        context={"lead": lead, "template_name": template_name},
-        instructions="""
-        Follow these steps to send an email to the lead:
-        1. Get the email template using get_template_by_name
-        2. Prepare a personalized email using prepare_email_for_lead
-        3. Send the email using send_email_resend (or mock_send_email_resend if testing)
-        4. Log the email using log_email_sent
-        5. Return a dictionary with the sending result
+            Ensure the email is properly personalized with the lead's information.
+            """,
+            result_type=Dict[str, Any]
+        )
 
-        Ensure the email is properly personalized with the lead's information.
-        """,
-        result_type=Dict[str, Any]
-    )
+        # Run the task
+        result = task.run()
+        return result
 
-    # Run the task
-    result = task.run()
-    logger.info(f"Email sending result: {result}")
-    return result
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error(f"Error in send_email_task: {str(e)}\nTraceback:\n{error_trace}")
+        return {"status": "Failed", "error": str(e)}
 
 def process_job_results_task(job: Job, use_mocks: bool = False) -> Job:
     """

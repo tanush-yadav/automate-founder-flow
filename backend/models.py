@@ -73,4 +73,3 @@ class EmailLog(BaseModel):
     subject: str
     template_used: str
     status: str = "Pending"
-    resend_message_id: Optional[str] = None

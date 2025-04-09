@@ -9,3 +9,4 @@ alwaysApply: false
 - Follow a mobile-first approach and responsive design patterns.
 - Emphasize server-side logic, minimizing the usage of `use client` and other client-only APIs.
 - Structure project as Progressive Web App (PWA) with offline capabilities, app-like experience, and installability across devices.
+- Make changes to client/ for these files.

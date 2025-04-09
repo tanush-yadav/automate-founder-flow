@@ -14,3 +14,4 @@ alwaysApply: false
 - Always attain to use DRY (Don't Repeat Yourself) principles.
 - Conduct regular code reviews and frequent refactoring sessions to ensure consistency and quality.
 - Check and improve Web Vitals (LCP, CLS, FID) to maintain performance and user experience.
+- Make changes to client/ for these files.

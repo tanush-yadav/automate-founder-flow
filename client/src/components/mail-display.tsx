@@ -1,7 +1,7 @@
-import addDays from "date-fns/addDays"
-import addHours from "date-fns/addHours"
-import format from "date-fns/format"
-import nextSaturday from "date-fns/nextSaturday"
+import addDays from 'date-fns/addDays'
+import addHours from 'date-fns/addHours'
+import format from 'date-fns/format'
+import nextSaturday from 'date-fns/nextSaturday'
 import {
   Archive,
   ArchiveX,
@@ -11,38 +11,35 @@ import {
   Reply,
   ReplyAll,
   Trash2,
-} from "lucide-react"
+} from 'lucide-react'
 
-import {
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu"
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Calendar }from "@/components/ui/calendar"
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import {
   DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Label } from "@/components/ui/label"
+} from '@/components/ui/dropdown-menu'
+import { Label } from '@/components/ui/label'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { Separator } from  "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
-import { Textarea }  from "@/components/ui/textarea"
+} from '@/components/ui/popover'
+import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { Mail } from "../app/data"
+} from '@/components/ui/tooltip'
+import { getEmailById } from '@/lib/emailService'
+import React from 'react'
+import { Mail } from '../app/data'
+import { EmailMetadata } from './email-metadata'
 
 interface MailDisplayProps {
   mail: Mail | null
@@ -50,6 +47,20 @@ interface MailDisplayProps {
 
 export function MailDisplay({ mail }: MailDisplayProps) {
   const today = new Date()
+  const [emailDetails, setEmailDetails] = React.useState<any>(null)
+
+  React.useEffect(() => {
+    async function fetchEmailDetails() {
+      if (mail?.id) {
+        const details = await getEmailById(mail.id)
+        setEmailDetails(details)
+      } else {
+        setEmailDetails(null)
+      }
+    }
+
+    fetchEmailDetails()
+  }, [mail?.id])
 
   return (
     <div className="flex h-full flex-col">
@@ -101,9 +112,9 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                       variant="ghost"
                       className="justify-start font-normal"
                     >
-                      Later today{" "}
+                      Later today{' '}
                       <span className="ml-auto text-muted-foreground">
-                        {format(addHours(today, 4), "E, h:m b")}
+                        {format(addHours(today, 4), 'E, h:m b')}
                       </span>
                     </Button>
                     <Button
@@ -112,7 +123,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                     >
                       Tomorrow
                       <span className="ml-auto text-muted-foreground">
-                        {format(addDays(today, 1), "E, h:m b")}
+                        {format(addDays(today, 1), 'E, h:m b')}
                       </span>
                     </Button>
                     <Button
@@ -121,7 +132,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                     >
                       This weekend
                       <span className="ml-auto text-muted-foreground">
-                        {format(nextSaturday(today), "E, h:m b")}
+                        {format(nextSaturday(today), 'E, h:m b')}
                       </span>
                     </Button>
                     <Button
@@ -130,7 +141,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                     >
                       Next week
                       <span className="ml-auto text-muted-foreground">
-                        {format(addDays(today, 7), "E, h:m b")}
+                        {format(addDays(today, 7), 'E, h:m b')}
                       </span>
                     </Button>
                   </div>
@@ -197,28 +208,39 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                 <AvatarImage alt={mail.name} />
                 <AvatarFallback>
                   {mail.name
-                    .split(" ")
+                    .split(' ')
                     .map((chunk) => chunk[0])
-                    .join("")}
+                    .join('')}
                 </AvatarFallback>
               </Avatar>
               <div className="grid gap-1">
                 <div className="font-semibold">{mail.name}</div>
                 <div className="line-clamp-1 text-xs">{mail.subject}</div>
                 <div className="line-clamp-1 text-xs">
-                  <span className="font-medium">Reply-To:</span> {mail.email}
+                  <span className="font-medium">To:</span> {mail.email}
                 </div>
+                {emailDetails && (
+                  <EmailMetadata
+                    status={emailDetails.status}
+                    scheduledAt={emailDetails.scheduled_at}
+                    sentAt={emailDetails.sent_at}
+                  />
+                )}
               </div>
             </div>
             {mail.date && (
               <div className="ml-auto text-xs text-muted-foreground">
-                {format(new Date(mail.date), "PPpp")}
+                {format(new Date(mail.date), 'PPpp')}
               </div>
             )}
           </div>
           <Separator />
-          <div className="flex-1 whitespace-pre-wrap p-4 text-sm">
-            {mail.text}
+          <div className="flex-1 p-4 text-sm overflow-auto">
+            {mail.text.startsWith('<') ? (
+              <div dangerouslySetInnerHTML={{ __html: mail.text }} />
+            ) : (
+              <div className="whitespace-pre-wrap">{mail.text}</div>
+            )}
           </div>
           <Separator className="mt-auto" />
           <div className="p-4">

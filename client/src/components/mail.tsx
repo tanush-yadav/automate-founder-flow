@@ -1,42 +1,25 @@
-"use client"
+'use client'
 
-import * as React from "react"
-import {
-  AlertCircle,
-  Archive,
-  ArchiveX,
-  File,
-  Inbox,
-  MessagesSquare,
-  Search,
-  Send,
-  ShoppingCart,
-  Trash2,
-  Users2,
-} from "lucide-react"
+import { AlertCircle, Clock, File, Inbox, Search, Send } from 'lucide-react'
+import * as React from 'react'
 
-import { cn } from "@/lib/utils"
-import { Input } from "@/components/ui/input"
+import { Input } from '@/components/ui/input'
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable"
+} from '@/components/ui/resizable'
+import { cn } from '@/lib/utils'
 
-import { Separator } from "@/components/ui/separator"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { AccountSwitcher } from "@/components/account-switcher"
-import { MailDisplay } from "@/components/mail-display"
-import { MailList } from "@/components/mail-list"
-import { Nav } from "@/components/nav"
-import { type Mail } from "../app/data"
-import { useMail } from "../app/use-mail"
+import { AccountSwitcher } from '@/components/account-switcher'
+import { MailDisplay } from '@/components/mail-display'
+import { MailList } from '@/components/mail-list'
+import { Nav } from '@/components/nav'
+import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { type Mail } from '../app/data'
+import { useMail } from '../app/use-mail'
 
 interface MailProps {
   accounts: {
@@ -58,7 +41,20 @@ export function Mail({
   navCollapsedSize,
 }: MailProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed)
-  const [mail] = useMail()
+  const [mail, setMail] = useMail()
+
+  // Count emails by status
+  const sentCount = mails.filter((mail) => mail.labels.includes('sent')).length
+  const scheduledCount = mails.filter((mail) =>
+    mail.labels.includes('scheduled')
+  ).length
+  const pendingCount = mails.filter((mail) =>
+    mail.labels.includes('pending')
+  ).length
+  const failedCount = mails.filter(
+    (mail) => mail.labels.includes('failed') || mail.labels.includes('error')
+  ).length
+  const allCount = mails.length
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -69,7 +65,7 @@ export function Mail({
             sizes
           )}`
         }}
-        className="h-full max-h-[800px] items-stretch"
+        className="h-full items-stretch"
       >
         <ResizablePanel
           defaultSize={defaultLayout[0]}
@@ -85,13 +81,13 @@ export function Mail({
           }}
           className={cn(
             isCollapsed &&
-              "min-w-[50px] transition-all duration-300 ease-in-out"
+              'min-w-[50px] transition-all duration-300 ease-in-out'
           )}
         >
           <div
             className={cn(
-              "flex h-[52px] items-center justify-center",
-              isCollapsed ? "h-[52px]" : "px-2"
+              'flex h-[52px] items-center justify-center',
+              isCollapsed ? 'h-[52px]' : 'px-2'
             )}
           >
             <AccountSwitcher isCollapsed={isCollapsed} accounts={accounts} />
@@ -101,76 +97,34 @@ export function Mail({
             isCollapsed={isCollapsed}
             links={[
               {
-                title: "Inbox",
-                label: "128",
+                title: 'All Emails',
+                label: allCount.toString(),
                 icon: Inbox,
-                variant: "default",
+                variant: 'default',
               },
               {
-                title: "Drafts",
-                label: "9",
-                icon: File,
-                variant: "ghost",
-              },
-              {
-                title: "Sent",
-                label: "",
+                title: 'Sent',
+                label: sentCount.toString(),
                 icon: Send,
-                variant: "ghost",
+                variant: 'ghost',
               },
               {
-                title: "Junk",
-                label: "23",
-                icon: ArchiveX,
-                variant: "ghost",
+                title: 'Scheduled',
+                label: scheduledCount.toString(),
+                icon: Clock,
+                variant: 'ghost',
               },
               {
-                title: "Trash",
-                label: "",
-                icon: Trash2,
-                variant: "ghost",
+                title: 'Pending',
+                label: pendingCount.toString(),
+                icon: File,
+                variant: 'ghost',
               },
               {
-                title: "Archive",
-                label: "",
-                icon: Archive,
-                variant: "ghost",
-              },
-            ]}
-          />
-          <Separator />
-          <Nav
-            isCollapsed={isCollapsed}
-            links={[
-              {
-                title: "Social",
-                label: "972",
-                icon: Users2,
-                variant: "ghost",
-              },
-              {
-                title: "Updates",
-                label: "342",
+                title: 'Failed',
+                label: failedCount.toString(),
                 icon: AlertCircle,
-                variant: "ghost",
-              },
-              {
-                title: "Forums",
-                label: "128",
-                icon: MessagesSquare,
-                variant: "ghost",
-              },
-              {
-                title: "Shopping",
-                label: "8",
-                icon: ShoppingCart,
-                variant: "ghost",
-              },
-              {
-                title: "Promotions",
-                label: "21",
-                icon: Archive,
-                variant: "ghost",
+                variant: 'ghost',
               },
             ]}
           />

@@ -25,6 +25,13 @@ import sys
 import logging
 import json
 from typing import Dict, Any, List, Optional
+import os
+import traceback
+
+# Load environment variables first, before any other imports
+from dotenv import load_dotenv
+load_dotenv()
+print("Environment variables loaded from .env file")
 
 # Configure logging
 logging.basicConfig(
@@ -37,9 +44,9 @@ logger = logging.getLogger(__name__)
 for module in ["backend", "controlflow"]:
     logging.getLogger(module).setLevel(logging.DEBUG)
 
-# Import necessary components
-from backend.models import JobQuery, Lead, Job
-from backend.tasks import (
+# Now import components after env variables are loaded
+from .models import JobQuery, Lead
+from .tasks import (
     parse_user_input_task,
     generate_search_plan_task,
     execute_search_task,
@@ -104,11 +111,23 @@ def test_send_email(lead: Lead) -> Dict[str, Any]:
 
     print(f"\n=== Testing email sending to: '{lead.contact_name}' at '{lead.company_name}' ===\n")
 
-    result = send_email_task(lead, use_mocks=True)
-    print("\nEmail Sending Result:")
-    print(json.dumps(result, indent=2))
+    try:
+        # Try to ensure the default template exists first
+        from .tools.supabase import ensure_default_template
+        template_name = ensure_default_template()
+        print(f"Using template: {template_name}")
 
-    return result
+        result = send_email_task(lead, use_mocks=True)
+        print("\nEmail Sending Result:")
+        print(json.dumps(result, indent=2))
+
+        return result
+    except Exception as e:
+        error_trace = traceback.format_exc()
+        print(f"\nError sending email: {str(e)}")
+        print(f"\nTraceback:\n{error_trace}")
+        logger.error(f"Error in test_send_email: {str(e)}\nTraceback:\n{error_trace}")
+        return {"status": "error", "message": str(e)}
 
 def test_full_workflow(query: str) -> Dict[str, Any]:
     """Test the full Founder Flow workflow using real functions"""
@@ -221,12 +240,23 @@ def test_leads_only_workflow(query: str, limit: int = 5) -> List[Lead]:
 
     return leads
 
+
 def show_help():
     """Display help information"""
     print(__doc__)
 
+
 def main():
     """Main entry point"""
+    # Print current environment variables for debugging
+    print(f"\nEnvironment Variables:")
+    print(f"  SUPABASE_URL: {'Set' if os.environ.get('SUPABASE_URL') else 'Not Set'}")
+    print(f"  SUPABASE_ANON_KEY: {'Set' if os.environ.get('SUPABASE_ANON_KEY') else 'Not Set'}")
+    print(f"  APOLLO_API_KEY: {'Set' if os.environ.get('APOLLO_API_KEY') else 'Not Set'}")
+    print(f"  OPENAI_API_KEY: {'Set' if os.environ.get('OPENAI_API_KEY') else 'Not Set'}")
+    print(f"  GMAIL_USER: {'Set' if os.environ.get('GMAIL_USER') else 'Not Set'}")
+    print("")
+
     if len(sys.argv) < 2:
         show_help()
         return
@@ -243,41 +273,47 @@ def main():
         return
 
     # Handle different component testing
-    if component == "parse_query":
-        test_parse_query(sys.argv[2])
+    try:
+        if component == "parse_query":
+            test_parse_query(sys.argv[2])
 
-    elif component == "generate_dorks":
-        query = sys.argv[2]
-        job_query = test_parse_query(query)
-        test_generate_dorks(job_query)
+        elif component == "generate_dorks":
+            query = sys.argv[2]
+            job_query = test_parse_query(query)
+            test_generate_dorks(job_query)
 
-    elif component == "search":
-        query = sys.argv[2]
-        job_query = test_parse_query(query)
-        job_query = test_generate_dorks(job_query)
-        test_search(job_query)
+        elif component == "search":
+            query = sys.argv[2]
+            job_query = test_parse_query(query)
+            job_query = test_generate_dorks(job_query)
+            test_search(job_query)
 
-    elif component == "collect_lead":
-        url = sys.argv[2]
-        test_collect_lead(url)
+        elif component == "collect_lead":
+            url = sys.argv[2]
+            test_collect_lead(url)
 
-    elif component == "send_email":
-        url = sys.argv[2]
-        lead = test_collect_lead(url)
-        test_send_email(lead)
+        elif component == "send_email":
+            url = sys.argv[2]
+            lead = test_collect_lead(url)
+            test_send_email(lead)
 
-    elif component == "full":
-        query = sys.argv[2]
-        test_full_workflow(query)
+        elif component == "full":
+            query = sys.argv[2]
+            test_full_workflow(query)
 
-    elif component == "leads_only":
-        query = sys.argv[2]
-        limit = int(sys.argv[3]) if len(sys.argv) > 3 else 5
-        test_leads_only_workflow(query, limit)
+        elif component == "leads_only":
+            query = sys.argv[2]
+            limit = int(sys.argv[3]) if len(sys.argv) > 3 else 5
+            test_leads_only_workflow(query, limit)
 
-    else:
-        print(f"Unknown component: {component}")
-        show_help()
+        else:
+            print(f"Unknown component: {component}")
+            show_help()
+    except Exception as e:
+        error_trace = traceback.format_exc()
+        print(f"\nError executing {component}: {str(e)}")
+        print(f"\nTraceback:\n{error_trace}")
+        logger.error(f"Error in main execution: {str(e)}\nTraceback:\n{error_trace}")
 
 if __name__ == "__main__":
     main()
