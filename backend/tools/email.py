@@ -87,7 +87,7 @@ class EmailSender:
             logger.error(f"Failed to initialize email client: {str(e)}")
             self.yag = None
 
-# FIXME: Not working most probably gotta test thing function.
+
 def send_email_yagmail(
     to: str,
     subject: str,
